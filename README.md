@@ -7,8 +7,10 @@ moment. A real local MCP server exposes the demo's plan tools over Streamable
 HTTP; the web client uses that same MCP endpoint.
 
 The experience adapts a shared timeline, suggests one next step, and keeps a
-personal reminder out of the share preview. The user reviews that preview
-before copying it. Nothing is sent to household members or external services.
+personal reminder out of the share preview. A readable change trail shows what
+the local demo adjusted, and the five most recent plan changes can be undone.
+The user reviews that preview before copying it. Nothing is sent to household
+members or external services.
 
 ## Run locally
 
@@ -38,7 +40,12 @@ The server validates each MCP `Origin` and `Host` to reduce DNS-rebinding risk.
 4. Open **Review update** to call the share-preview MCP tool and confirm
    personal details are excluded before copying. Copying is local only; the
    prototype does not send messages.
-5. Choose **Reset demo** to restore the initial plan and replay the walkthrough.
+5. Use **Undo last change** to see the previous plan restored, then choose
+   **Reset demo** to return to the initial state.
+
+Every adjustment is shown in **What changed**, including timeline and simulated
+device-state changes. Undo can be used repeatedly for up to five recent
+adjustments; it never controls a real device or calendar.
 
 ## MCP tools
 
@@ -46,6 +53,8 @@ The server validates each MCP `Origin` and `Host` to reduce DNS-rebinding risk.
   device state; it intentionally omits the private reminder.
 - `adjust_evening_plan` — interprets the demo's bounded pickup, arrival, and
   quiet-time scenarios and changes only local in-memory demo state.
+- `undo_last_change` — reverses one of the five most recent plan adjustments;
+  the UI shows a readable change trail without exposing the private reminder.
 - `preview_household_update` — prepares a reviewable text preview without
   sending it.
 - `reset_demo_plan` — resets fictional in-memory demo state for repeatable

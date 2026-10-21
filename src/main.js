@@ -17,12 +17,31 @@ const voiceButton = document.querySelector("#voice-button");
 const availability = document.querySelector(".availability");
 const shareButton = document.querySelector("#share-button");
 const resetButton = document.querySelector("#reset-demo");
+const undoButton = document.querySelector("#undo-change");
+const changeStatus = document.querySelector("#change-status");
+const changeReply = document.querySelector("#change-reply");
+const changeList = document.querySelector("#change-list");
 const scenarioButtons = [...document.querySelectorAll("[data-scenario]")];
 
 const mcp = new HearthMcpClient();
 let plan = null;
 let busy = false;
+let canUndo = false;
 let toastTimer;
+
+function renderChangeLog(lastUpdate) {
+  canUndo = Boolean(lastUpdate?.canUndo);
+  undoButton.disabled = busy || !canUndo;
+  changeStatus.textContent = canUndo ? "Ready to undo" : "Nothing to undo";
+  changeReply.textContent = lastUpdate?.reply
+    ?? "As Hearth adapts the demo, you'll see exactly what changed here.";
+  changeList.replaceChildren();
+  for (const change of lastUpdate?.changes ?? []) {
+    const item = document.createElement("li");
+    item.textContent = change;
+    changeList.append(item);
+  }
+}
 
 function renderTimeline() {
   planElement.innerHTML = plan.events.map((event, index) => `
@@ -74,6 +93,7 @@ function setBusy(value) {
   voiceButton.disabled = value;
   shareButton.disabled = value;
   resetButton.disabled = value;
+  undoButton.disabled = value || !canUndo;
   scenarioButtons.forEach((button) => { button.disabled = value; });
 }
 
@@ -91,6 +111,13 @@ async function submitRequest(request) {
   try {
     const result = await mcp.callTool("adjust_evening_plan", { request: normalized });
     plan = result.plan;
+    if (result.updated) {
+      renderChangeLog({
+        canUndo: result.canUndo,
+        reply: result.reply,
+        changes: result.changes,
+      });
+    }
     addConversationMessage(
       "assistant",
       result.reply,
@@ -185,6 +212,7 @@ resetButton.addEventListener("click", async () => {
   try {
     const result = await mcp.callTool("reset_demo_plan");
     plan = result.plan;
+    renderChangeLog({ canUndo: false });
     renderTimeline();
     addConversationMessage("assistant", result.reply, "Demo reset · No real data changed");
     setConnectionStatus(true);
@@ -193,6 +221,32 @@ resetButton.addEventListener("click", async () => {
       "assistant",
       `I couldn't reset the demo because the local MCP tools are unavailable. ${error instanceof Error ? error.message : String(error)}`,
       "MCP offline · No changes made",
+    );
+    setConnectionStatus(false);
+  } finally {
+    setBusy(false);
+  }
+});
+
+undoButton.addEventListener("click", async () => {
+  if (busy || !canUndo) return;
+  setBusy(true);
+  try {
+    const result = await mcp.callTool("undo_last_change");
+    plan = result.plan;
+    renderChangeLog({
+      canUndo: result.canUndo,
+      reply: result.reply,
+      changes: result.changes,
+    });
+    renderTimeline();
+    addConversationMessage("assistant", result.reply, "Change reversed · Local demo only");
+    setConnectionStatus(true);
+  } catch (error) {
+    addConversationMessage(
+      "assistant",
+      `I couldn't undo that change because the local MCP tools are unavailable. ${error instanceof Error ? error.message : String(error)}`,
+      "MCP offline · Plan unchanged",
     );
     setConnectionStatus(false);
   } finally {
@@ -221,6 +275,9 @@ async function initialize() {
     await mcp.connect();
     const result = await mcp.callTool("get_evening_plan");
     plan = result.plan;
+    renderChangeLog(result.lastUpdate
+      ? { ...result.lastUpdate, canUndo: result.canUndo }
+      : null);
     renderTimeline();
     setConnectionStatus(true);
   } catch (error) {

@@ -24,6 +24,7 @@ export class HearthMcpClient {
     const requiredTools = [
       "get_evening_plan",
       "adjust_evening_plan",
+      "undo_last_change",
       "preview_household_update",
       "reset_demo_plan",
     ];

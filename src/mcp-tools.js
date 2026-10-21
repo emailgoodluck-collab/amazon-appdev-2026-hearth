@@ -1,6 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
-import { createInitialPlan, createSharePreview, planFromRequest } from "./home-orchestrator.js";
+import {
+  createInitialPlan,
+  createSharePreview,
+  describePlanChanges,
+  planFromRequest,
+} from "./home-orchestrator.js";
 
 const SERVER_INFO = {
   name: "hearth-evening-relay",
@@ -10,6 +15,9 @@ const SERVER_INFO = {
 };
 
 let currentPlan = createInitialPlan();
+let undoStack = [];
+let lastUpdate = null;
+const MAX_UNDO_STEPS = 5;
 
 function createToolResult(payload, summary) {
   return {
@@ -20,6 +28,8 @@ function createToolResult(payload, summary) {
 
 export function resetDemoPlan() {
   currentPlan = createInitialPlan();
+  undoStack = [];
+  lastUpdate = null;
 }
 
 export function createHearthMcpServer() {
@@ -32,7 +42,10 @@ export function createHearthMcpServer() {
   }, async () => {
     const { events, nudge, timer, entryLight, intent } = structuredClone(currentPlan);
     const plan = { events, nudge, timer, entryLight, intent };
-    return createToolResult({ plan }, `There are ${events.length} moments on tonight's shared plan. Personal reminders are excluded.`);
+    return createToolResult(
+      { plan, canUndo: undoStack.length > 0, lastUpdate },
+      `There are ${events.length} moments on tonight's shared plan. Personal reminders are excluded.`,
+    );
   });
 
   server.registerTool("adjust_evening_plan", {
@@ -43,12 +56,54 @@ export function createHearthMcpServer() {
     },
   }, async ({ request }) => {
     const result = planFromRequest(currentPlan, request);
+    const changes = result.updated
+      ? describePlanChanges(currentPlan, result.plan)
+      : [];
+    if (result.updated) {
+      undoStack.push(structuredClone(currentPlan));
+      if (undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
+      lastUpdate = { reply: result.reply, changes };
+    }
     currentPlan = result.plan;
     const { events, nudge, timer, entryLight, intent } = structuredClone(currentPlan);
     const plan = { events, nudge, timer, entryLight, intent };
     return createToolResult(
-      { plan, reply: result.reply, updated: result.updated },
+      {
+        plan,
+        reply: result.reply,
+        updated: result.updated,
+        changes,
+        canUndo: undoStack.length > 0,
+      },
       result.reply,
+    );
+  });
+
+  server.registerTool("undo_last_change", {
+    title: "Undo the last plan change",
+    description: "Restore the previous fictional evening plan. Up to five recent changes can be undone. This only affects local demo state and never changes real calendars, devices, or people.",
+    inputSchema: {},
+  }, async () => {
+    const previousPlan = undoStack.pop();
+    const reply = previousPlan
+      ? "Undid the last plan change. Your earlier evening plan is restored."
+      : "There isn't a recent plan change to undo.";
+    const changes = previousPlan
+      ? describePlanChanges(currentPlan, previousPlan)
+      : [];
+    if (previousPlan) {
+      currentPlan = previousPlan;
+      lastUpdate = { reply, changes };
+    }
+    const { events, nudge, timer, entryLight, intent } = structuredClone(currentPlan);
+    return createToolResult(
+      {
+        plan: { events, nudge, timer, entryLight, intent },
+        reply,
+        changes,
+        canUndo: undoStack.length > 0,
+      },
+      reply,
     );
   });
 

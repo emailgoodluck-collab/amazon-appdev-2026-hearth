@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createInitialPlan, createSharePreview, planFromRequest } from "../src/home-orchestrator.js";
+import {
+  createInitialPlan,
+  createSharePreview,
+  describePlanChanges,
+  planFromRequest,
+} from "../src/home-orchestrator.js";
 
 test("late pickup shifts dinner and updates the timer without mutating the original plan", () => {
   const original = createInitialPlan();
@@ -47,4 +52,16 @@ test("unsupported requests receive an explicit prompt and leave plan unchanged",
   assert.equal(result.plan, original);
   assert.equal(result.updated, false);
   assert.match(result.reply, /try telling me/i);
+});
+
+test("change summaries show shared timeline and device changes without private reminders", () => {
+  const initial = createInitialPlan();
+  const { plan } = planFromRequest(initial, "The bus is running late");
+  const changes = describePlanChanges(initial, plan);
+
+  assert.equal(changes.length, 3);
+  assert.match(changes[0], /School pickup.*5:15 PM.*5:27 PM/);
+  assert.match(changes[1], /Dinner together.*5:30 PM.*5:42 PM/);
+  assert.match(changes[2], /Kitchen timer/);
+  assert.doesNotMatch(changes.join(" "), /quiet moment|private reminder/i);
 });

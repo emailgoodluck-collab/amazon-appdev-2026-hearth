@@ -92,7 +92,7 @@ export function planFromRequest(currentPlan, request) {
     return {
       plan,
       updated: true,
-      reply: "I’ve got Nana arriving at six. The entry light is ready, and I’ve added a simple welcome reminder to the shared plan. Your personal reminders stay private.",
+      reply: "I’ve got Nana arriving at six. The entry light is ready, and your personal reminders stay private.",
     };
   }
 
@@ -115,6 +115,38 @@ export function planFromRequest(currentPlan, request) {
     updated: false,
     reply: "I’m here. In this demo, try telling me the bus is late, that Nana is coming, or that you need a quiet moment. I’ll adjust the plan without sending anything.",
   };
+}
+
+export function describePlanChanges(previousPlan, nextPlan) {
+  const changes = [];
+  for (const nextEvent of nextPlan.events) {
+    const previousEvent = previousPlan.events.find((event) => event.id === nextEvent.id);
+    if (!previousEvent) continue;
+
+    const details = [];
+    if (previousEvent.time !== nextEvent.time || previousEvent.period !== nextEvent.period) {
+      details.push(
+        `${previousEvent.time} ${previousEvent.period} → ${nextEvent.time} ${nextEvent.period}`,
+      );
+    }
+    if (previousEvent.state !== nextEvent.state) {
+      details.push(`${previousEvent.state} → ${nextEvent.state}`);
+    }
+    if (details.length) {
+      const title = previousEvent.title === nextEvent.title
+        ? nextEvent.title
+        : `${previousEvent.title} → ${nextEvent.title}`;
+      changes.push(`${title}: ${details.join(" · ")}`);
+    }
+  }
+
+  if (previousPlan.timer !== nextPlan.timer) {
+    changes.push(`Kitchen timer: ${previousPlan.timer} → ${nextPlan.timer}`);
+  }
+  if (previousPlan.entryLight !== nextPlan.entryLight) {
+    changes.push(`Entry light: ${previousPlan.entryLight} → ${nextPlan.entryLight}`);
+  }
+  return changes;
 }
 
 export function createSharePreview(plan) {
