@@ -1,0 +1,236 @@
+import { HearthMcpClient } from "./mcp-client.js";
+
+const planElement = document.querySelector("#timeline");
+const conversation = document.querySelector("#conversation");
+const form = document.querySelector("#request-form");
+const input = document.querySelector("#request-input");
+const dialog = document.querySelector("#share-dialog");
+const sharePreview = document.querySelector("#share-preview");
+const feedback = document.querySelector("#dialog-feedback");
+const toast = document.querySelector("#toast");
+const planStatus = document.querySelector("#plan-status");
+const nudgeText = document.querySelector("#nudge-text");
+const timerState = document.querySelector("#timer-state");
+const entryLightState = document.querySelector("#entry-light-state");
+const copyButton = document.querySelector("#copy-share");
+const voiceButton = document.querySelector("#voice-button");
+const availability = document.querySelector(".availability");
+const shareButton = document.querySelector("#share-button");
+const resetButton = document.querySelector("#reset-demo");
+const scenarioButtons = [...document.querySelectorAll("[data-scenario]")];
+
+const mcp = new HearthMcpClient();
+let plan = null;
+let busy = false;
+let toastTimer;
+
+function renderTimeline() {
+  planElement.innerHTML = plan.events.map((event, index) => `
+    <li class="timeline-item ${index === 0 ? "timeline-item--first" : ""}" data-event="${event.id}">
+      <div class="timeline-time"><strong>${event.time}</strong><span>${event.period}</span></div>
+      <div class="timeline-track"><span class="timeline-dot timeline-dot--${event.tone}">${event.icon}</span>${index < plan.events.length - 1 ? '<span class="timeline-line"></span>' : ""}</div>
+      <div class="timeline-event"><div class="timeline-event-top"><strong>${escapeHtml(event.title)}</strong><span class="event-state">${escapeHtml(event.state)}</span></div><span>${escapeHtml(event.detail)}</span></div>
+    </li>`).join("");
+  nudgeText.textContent = plan.nudge;
+  timerState.textContent = plan.timer;
+  entryLightState.textContent = plan.entryLight;
+  planStatus.textContent = `${plan.events.length} moments · updated`;
+}
+
+function addConversationMessage(role, text, contextText = "") {
+  const article = document.createElement("article");
+  article.className = role === "user" ? "user-message" : "assistant-message";
+  if (role === "assistant") {
+    const avatar = document.createElement("span");
+    avatar.className = "message-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = "h";
+    article.append(avatar);
+  }
+
+  const body = document.createElement("div");
+  body.className = "message-body";
+  const paragraph = document.createElement("p");
+  paragraph.textContent = text;
+  body.append(paragraph);
+  if (role === "assistant" && contextText) {
+    const context = document.createElement("div");
+    context.className = "message-context";
+    const spark = document.createElement("span");
+    spark.className = "context-spark";
+    spark.textContent = "✳";
+    context.append(spark, ` ${contextText}`);
+    body.append(context);
+  }
+  article.append(body);
+  conversation.append(article);
+  conversation.scrollTop = conversation.scrollHeight;
+}
+
+function setBusy(value) {
+  busy = value;
+  input.disabled = value;
+  form.querySelector('[type="submit"]').disabled = value;
+  voiceButton.disabled = value;
+  shareButton.disabled = value;
+  resetButton.disabled = value;
+  scenarioButtons.forEach((button) => { button.disabled = value; });
+}
+
+function setConnectionStatus(connected) {
+  const statusDot = document.createElement("span");
+  availability.replaceChildren(statusDot, ` ${connected ? "MCP connected" : "MCP offline"}`);
+  availability.classList.toggle("availability--offline", !connected);
+}
+
+async function submitRequest(request) {
+  const normalized = String(request ?? "").trim();
+  if (!normalized || busy) return;
+  setBusy(true);
+  addConversationMessage("user", normalized);
+  try {
+    const result = await mcp.callTool("adjust_evening_plan", { request: normalized });
+    plan = result.plan;
+    addConversationMessage(
+      "assistant",
+      result.reply,
+      result.updated ? "Plan updated · Personal reminders stay private" : "Demo guidance · No changes made",
+    );
+    if (result.updated) renderTimeline();
+    setConnectionStatus(true);
+  } catch (error) {
+    addConversationMessage(
+      "assistant",
+      `I couldn't reach the local Hearth tools, so I didn't change the plan. ${error instanceof Error ? error.message : String(error)}`,
+      "MCP offline · No changes made",
+    );
+    setConnectionStatus(false);
+  } finally {
+    input.value = "";
+    setBusy(false);
+    input.focus();
+  }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character]);
+}
+
+function showToast(message) {
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("toast--visible");
+  toastTimer = setTimeout(() => toast.classList.remove("toast--visible"), 2800);
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  void submitRequest(input.value);
+});
+
+document.querySelectorAll("[data-scenario]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const requests = {
+      "late-pickup": "The bus is running 12 minutes late. Can you make room?",
+      "nana-arrival": "Nana is coming at six. Help us get ready.",
+      "quiet-minute": "I need ten quiet minutes before dinner.",
+    };
+    void submitRequest(requests[button.dataset.scenario]);
+  });
+});
+
+voiceButton.addEventListener("click", () => {
+  const sample = "The bus is running 12 minutes late. Can you make room?";
+  voiceButton.classList.add("voice-button--active");
+  voiceButton.setAttribute("aria-label", "Simulating voice request");
+  voiceButton.title = "Simulating a voice request — no microphone is used";
+  input.value = sample;
+  setTimeout(() => {
+    voiceButton.classList.remove("voice-button--active");
+    voiceButton.setAttribute("aria-label", "Simulate a voice request");
+    voiceButton.title = "Simulate a voice request";
+    void submitRequest(sample);
+  }, 650);
+});
+
+shareButton.addEventListener("click", async () => {
+  if (busy) return;
+  setBusy(true);
+  feedback.textContent = "";
+  copyButton.disabled = false;
+  dialog.showModal();
+  feedback.textContent = "Preparing preview with the local MCP tool…";
+  try {
+    const result = await mcp.callTool("preview_household_update");
+    sharePreview.textContent = result.preview;
+    feedback.textContent = "Review this update. It has not been sent.";
+  } catch (error) {
+    sharePreview.textContent = "";
+    feedback.textContent = `Could not prepare a share preview: ${error instanceof Error ? error.message : String(error)}`;
+    copyButton.disabled = true;
+  } finally {
+    setBusy(false);
+  }
+});
+
+resetButton.addEventListener("click", async () => {
+  if (busy) return;
+  setBusy(true);
+  try {
+    const result = await mcp.callTool("reset_demo_plan");
+    plan = result.plan;
+    renderTimeline();
+    addConversationMessage("assistant", result.reply, "Demo reset · No real data changed");
+    setConnectionStatus(true);
+  } catch (error) {
+    addConversationMessage(
+      "assistant",
+      `I couldn't reset the demo because the local MCP tools are unavailable. ${error instanceof Error ? error.message : String(error)}`,
+      "MCP offline · No changes made",
+    );
+    setConnectionStatus(false);
+  } finally {
+    setBusy(false);
+  }
+});
+
+document.querySelector("#close-share").addEventListener("click", () => dialog.close());
+
+copyButton.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(sharePreview.textContent);
+    feedback.textContent = "Copied for you. Nothing was sent.";
+    showToast("Update copied · nothing was sent");
+  } catch {
+    feedback.textContent = "Clipboard access is unavailable. You can select and copy the preview text.";
+  }
+});
+
+dialog.addEventListener("click", (event) => {
+  if (event.target === dialog) dialog.close();
+});
+
+async function initialize() {
+  try {
+    await mcp.connect();
+    const result = await mcp.callTool("get_evening_plan");
+    plan = result.plan;
+    renderTimeline();
+    setConnectionStatus(true);
+  } catch (error) {
+    setConnectionStatus(false);
+    addConversationMessage(
+      "assistant",
+      `The local MCP service isn't connected. The plan is unchanged. Start it with npm start, then reload. ${error instanceof Error ? error.message : String(error)}`,
+      "MCP offline · No changes made",
+    );
+  }
+}
+
+void initialize();

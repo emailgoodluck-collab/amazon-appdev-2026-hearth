@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5f0">
+  <meta name="description" content="Hearth is a simulated Alexa+ experience that helps caregiving households adapt their evening plans together.">
+  <title>Hearth — A calmer kind of together</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./src/main.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Hearth home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><path d="M5 15.2 16 6l11 9.2v11H5v-11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 26v-7.5a4 4 0 0 1 8 0V26M16 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        <span>hearth<span class="brand-period">.</span></span>
+      </a>
+      <nav class="topbar-nav" aria-label="Main navigation">
+        <a class="nav-link nav-link--active" href="#plan">Evening plan</a>
+        <a class="nav-link" href="#how-it-works">How it works</a>
+      </nav>
+      <div class="topbar-meta">
+        <span class="demo-pill"><span class="demo-dot"></span> Local MCP demo</span>
+        <button class="avatar-button" type="button" aria-label="Demo household: Maya">M</button>
+      </div>
+    </header>
+
+    <main id="plan">
+      <section class="welcome-row">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> WEDNESDAY, OCTOBER 21 <span class="eyebrow-divider">/</span> HOME, IN SYNC</p>
+          <h1>A little more room<br>in the <span>evening.</span></h1>
+          <p class="welcome-copy">Plans change. Hearth helps everyone find the next right thing.</p>
+        </div>
+        <div class="welcome-note">
+          <span class="sunset-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none"><path d="M8 31h32M13 31a11 11 0 0 1 22 0M24 8v5M10 15l4 4m20-4-4 4M5 25h5m28 0h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 39h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <div><strong>Your Wednesday, together</strong><span>3 people · 4 moments · one shared plan</span></div>
+        </div>
+      </section>
+
+      <section class="workspace-grid" aria-label="Evening household assistant">
+        <section class="assistant-card" aria-labelledby="assistant-title">
+          <header class="assistant-header">
+            <div class="assistant-identity">
+              <span class="assistant-orb" aria-hidden="true"><span></span></span>
+              <div>
+                <p class="eyebrow">YOUR HOME ASSISTANT</p>
+                <h2 id="assistant-title">Here with you, Maya.</h2>
+              </div>
+            </div>
+            <span class="availability"><span></span> Connecting to local tools</span>
+          </header>
+
+          <div class="conversation" id="conversation" aria-live="polite" aria-label="Conversation">
+            <div class="time-marker"><span></span> 5:06 PM <span></span></div>
+            <article class="assistant-message">
+              <span class="message-avatar" aria-hidden="true">h</span>
+              <div class="message-body">
+                <p>Good evening. Pickup, dinner, and Nana's visit are on your plan. Want me to help make a little breathing room?</p>
+                <div class="message-context"><span class="context-spark">✳</span> I’m looking at your demo calendar and home routine.</div>
+              </div>
+            </article>
+          </div>
+
+          <div class="scenario-prompt">
+            <div class="prompt-heading"><span>TRY A REAL-LIFE MOMENT</span><span class="prompt-rule"></span></div>
+            <div class="scenario-chips">
+              <button class="scenario-chip" type="button" data-scenario="late-pickup"><span class="chip-icon">↗</span> The bus is running late</button>
+              <button class="scenario-chip" type="button" data-scenario="nana-arrival"><span class="chip-icon">⌂</span> Nana is coming at six</button>
+              <button class="scenario-chip" type="button" data-scenario="quiet-minute"><span class="chip-icon">◷</span> I need ten quiet minutes</button>
+            </div>
+          </div>
+
+          <form class="composer" id="request-form">
+            <label class="sr-only" for="request-input">Tell Hearth what changed</label>
+            <span class="composer-spark" aria-hidden="true">✳</span>
+            <input id="request-input" name="request" type="text" maxlength="240" placeholder="Tell Hearth what changed…" autocomplete="off">
+            <button class="voice-button" id="voice-button" type="button" aria-label="Simulate a voice request" title="Simulate a voice request">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </button>
+            <button class="send-button" type="submit" aria-label="Send request">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 12 16-7-5.5 15-3-6-7.5-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m11.5 14 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </button>
+          </form>
+          <p class="privacy-note"><span aria-hidden="true">◈</span> Demo requests go to your local MCP server. Nothing is sent to a family member or external service.</p>
+        </section>
+
+        <aside class="plan-card" aria-labelledby="plan-title">
+          <div class="plan-card-top">
+            <div>
+              <p class="eyebrow">THE WHOLE PICTURE</p>
+              <h2 id="plan-title">Tonight, at a glance</h2>
+            </div>
+            <div class="plan-actions">
+              <button class="reset-button" id="reset-demo" type="button" aria-label="Reset the simulated evening plan">↺ Reset demo</button>
+              <span class="sync-indicator" aria-label="Demo plan is in sync"><span></span> IN SYNC</span>
+            </div>
+          </div>
+
+          <div class="household-strip">
+            <div class="household-avatars" aria-label="Maya, Nora, and Nana">
+              <span class="person-avatar person-avatar--maya">M</span><span class="person-avatar person-avatar--nora">N</span><span class="person-avatar person-avatar--nana">N</span>
+            </div>
+            <p><strong>Your people</strong><span>Maya, Nora &amp; Nana</span></p>
+            <button class="text-button" id="share-button" type="button">Review update <span aria-hidden="true">↗</span></button>
+          </div>
+
+          <div class="timeline-heading"><span>THE EVENING FLOW</span><span id="plan-status">3 moments</span></div>
+          <ol class="timeline" id="timeline" aria-label="Tonight's timeline" aria-live="polite"></ol>
+
+          <div class="gentle-nudge" id="gentle-nudge">
+            <span class="nudge-icon" aria-hidden="true">✳</span>
+            <div><span class="eyebrow">A GENTLE NUDGE</span><p id="nudge-text">The plan is full, but it doesn't have to feel rushed.</p></div>
+          </div>
+
+          <section class="private-reminder" aria-label="Personal reminder, private to Maya">
+            <div class="private-lock" aria-hidden="true">⌑</div>
+            <div><span class="eyebrow">JUST FOR YOU <span class="private-tag">PRIVATE</span></span><p>Take a quiet moment before dinner.</p></div>
+            <span class="private-time">5:20</span>
+          </section>
+        </aside>
+      </section>
+
+      <section class="device-row" aria-label="Simulated home context">
+        <div class="device-intro"><span class="eyebrow">AWARE OF THE LITTLE THINGS</span><p>One plan, gently connected.</p></div>
+        <article class="device-card">
+          <span class="device-symbol device-symbol--calendar" aria-hidden="true">▦</span>
+          <span class="device-copy"><strong>Family calendar</strong><small>Pickup · Dinner · Nana</small></span>
+          <span class="device-state"><span></span> DEMO</span>
+        </article>
+        <article class="device-card">
+          <span class="device-symbol device-symbol--timer" aria-hidden="true">◷</span>
+          <span class="device-copy"><strong>Kitchen timer</strong><small id="timer-state">18 min remaining</small></span>
+          <span class="device-state"><span></span> DEMO</span>
+        </article>
+        <article class="device-card">
+          <span class="device-symbol device-symbol--entry" aria-hidden="true">⌂</span>
+          <span class="device-copy"><strong>Entry light</strong><small id="entry-light-state">Standby · not yet needed</small></span>
+          <span class="device-state"><span></span> DEMO</span>
+        </article>
+      </section>
+
+      <section class="how-it-works" id="how-it-works">
+        <span class="eyebrow">WHY HEARTH EXISTS</span>
+        <p>Caregivers are already coordinating a dozen things at once. <strong>Hearth turns a change of plans into a calmer next step</strong>—and keeps personal reminders personal.</p>
+        <span class="concept-label">A simulated Alexa+ experience · Local MCP tools · No Amazon device connection</span>
+      </section>
+    </main>
+    <footer class="footer"><a class="brand brand--footer" href="#"><span class="brand-mark" aria-hidden="true">h</span><span>hearth<span class="brand-period">.</span></span></a><span>Made for the moments between the moments.</span><span>Hackathon prototype · MCP connected · Devices simulated</span></footer>
+  </div>
+
+  <dialog class="share-dialog" id="share-dialog" aria-labelledby="share-title">
+    <form method="dialog" class="dialog-close-form"><button class="dialog-close" aria-label="Close preview">×</button></form>
+    <p class="eyebrow">A SHARED MOMENT</p>
+    <h2 id="share-title">Before anything goes out…</h2>
+    <p class="dialog-intro">Hearth keeps you in control. Review the update first—nothing is sent automatically.</p>
+    <div class="share-preview" id="share-preview"></div>
+    <div class="dialog-actions"><button class="button-quiet" id="close-share" type="button">Not now</button><button class="button-primary" id="copy-share" type="button">Copy this update <span aria-hidden="true">↗</span></button></div>
+    <p class="dialog-feedback" id="dialog-feedback" role="status"></p>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
