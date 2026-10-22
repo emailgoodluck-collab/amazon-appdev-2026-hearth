@@ -4,9 +4,19 @@ import {
   createInitialPlan,
   createSharePreview,
   describePlanChanges,
+  addActivity,
+  addPrivateNote,
+  deleteLastPrivateNote,
   planFromRequest,
+  removeActivity,
 } from "../src/home-orchestrator.js";
-import { classifyPrompt, summarizeEveningPlan } from "../src/prompt-commands.js";
+import {
+  classifyPrompt,
+  parseActivityRemoval,
+  parseActivityRequest,
+  parseNoteRequest,
+  summarizeEveningPlan,
+} from "../src/prompt-commands.js";
 import { createSpeechRecognition, getRecognitionConstructor } from "../src/voice-input.js";
 
 test("late pickup shifts dinner and updates the timer without mutating the original plan", () => {
@@ -86,6 +96,59 @@ test("spoken plan summary contains shared events and excludes personal reminder"
   assert.match(summary, /Pickup is running late/);
   assert.match(summary, /Dinner, when you’re ready/);
   assert.doesNotMatch(summary, /quiet moment|private reminder/i);
+});
+
+test("voice prompts parse private notes and activities without leaking note text", () => {
+  assert.equal(classifyPrompt("Add a note that I need milk"), "add-note");
+  assert.equal(parseNoteRequest("Add a note that I need milk"), "I need milk");
+  assert.equal(classifyPrompt("Please remember to call the clinic tomorrow"), "add-note");
+  assert.equal(parseNoteRequest("Please remember to call the clinic tomorrow"), "call the clinic tomorrow");
+  assert.equal(classifyPrompt("Show my notes"), "list-notes");
+  assert.equal(classifyPrompt("Delete the last note"), "delete-note");
+  assert.equal(classifyPrompt("Schedule a neighborhood walk at 7 PM"), "add-activity");
+  assert.deepEqual(parseActivityRequest("Schedule a neighborhood walk at 7 PM"), {
+    title: "neighborhood walk",
+    time: "07:00",
+    period: "PM",
+  });
+  assert.deepEqual(parseActivityRequest("Add the dentist visit at 10:30 AM"), {
+    title: "dentist visit",
+    time: "10:30",
+    period: "AM",
+  });
+  assert.deepEqual(parseActivityRequest("Add a neighborhood walk"), {
+    title: "neighborhood walk",
+    time: null,
+    period: null,
+  });
+  assert.equal(classifyPrompt("Remove activity Neighborhood walk"), "remove-activity");
+  assert.equal(parseActivityRemoval("Remove activity Neighborhood walk"), "Neighborhood walk");
+});
+
+test("private notes stay out of shared events and activity changes are undoable", () => {
+  const initial = createInitialPlan();
+  const withNote = addPrivateNote(initial, "Pick up the blue folder after school.");
+  assert.equal(withNote.updated, true);
+  assert.equal(withNote.plan.privateNotes[0].text, "Pick up the blue folder after school.");
+  assert.equal(initial.privateNotes.length, 0);
+  assert.doesNotMatch(createSharePreview(withNote.plan), /blue folder/i);
+
+  const withActivity = addActivity(withNote.plan, {
+    title: "Neighborhood walk",
+    time: "07:00",
+    period: "PM",
+  });
+  assert.equal(withActivity.plan.events.at(-1).title, "Neighborhood walk");
+  const activityChanges = describePlanChanges(withNote.plan, withActivity.plan);
+  assert.equal(activityChanges.filter((change) => change.startsWith("Activity added:")).length, 1);
+
+  const withoutActivity = removeActivity(withActivity.plan, "Neighborhood walk");
+  assert.equal(withoutActivity.plan.events.some((event) => event.title === "Neighborhood walk"), false);
+  assert.equal(deleteLastPrivateNote(withoutActivity.plan).plan.privateNotes.length, 0);
+  assert.match(
+    describePlanChanges(withoutActivity.plan, deleteLastPrivateNote(withoutActivity.plan).plan).join(" "),
+    /Private note removed/,
+  );
 });
 
 test("speech recognition is opt-in, single-utterance, and exposes interim and final text", () => {

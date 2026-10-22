@@ -1,10 +1,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import {
+  addActivity,
+  addPrivateNote,
   createInitialPlan,
   createSharePreview,
+  deleteLastPrivateNote,
   describePlanChanges,
   planFromRequest,
+  removeActivity,
 } from "./home-orchestrator.js";
 
 const SERVER_INFO = {
@@ -24,6 +28,40 @@ function createToolResult(payload, summary) {
     content: [{ type: "text", text: summary }],
     structuredContent: payload,
   };
+}
+
+function applyPlanChange(update, summary, changeSummary = null) {
+  const previousPlan = currentPlan;
+  const result = update(previousPlan);
+  if (!result.updated) {
+    return createToolResult(
+      { reply: result.reply, updated: false },
+      result.reply,
+    );
+  }
+
+  undoStack.push(structuredClone(previousPlan));
+  if (undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
+  currentPlan = result.plan;
+  const changes = changeSummary
+    ? [changeSummary]
+    : describePlanChanges(previousPlan, currentPlan);
+  lastUpdate = {
+    reply: result.reply,
+    changes: changes.filter((change) => !/note/i.test(change)),
+  };
+  const { events, nudge, timer, entryLight, intent } = structuredClone(currentPlan);
+  return createToolResult(
+    {
+      plan: { events, nudge, timer, entryLight, intent },
+      reply: result.reply,
+      updated: true,
+      changes,
+      canUndo: undoStack.length > 0,
+      ...(summary === "private" ? { notes: structuredClone(currentPlan.privateNotes) } : {}),
+    },
+    result.reply,
+  );
 }
 
 export function resetDemoPlan() {
@@ -56,28 +94,64 @@ export function createHearthMcpServer() {
     },
   }, async ({ request }) => {
     const result = planFromRequest(currentPlan, request);
-    const changes = result.updated
-      ? describePlanChanges(currentPlan, result.plan)
-      : [];
-    if (result.updated) {
-      undoStack.push(structuredClone(currentPlan));
-      if (undoStack.length > MAX_UNDO_STEPS) undoStack.shift();
-      lastUpdate = { reply: result.reply, changes };
-    }
-    currentPlan = result.plan;
-    const { events, nudge, timer, entryLight, intent } = structuredClone(currentPlan);
-    const plan = { events, nudge, timer, entryLight, intent };
-    return createToolResult(
-      {
-        plan,
-        reply: result.reply,
-        updated: result.updated,
-        changes,
-        canUndo: undoStack.length > 0,
-      },
-      result.reply,
-    );
+    if (!result.updated) return createToolResult({ reply: result.reply, updated: false }, result.reply);
+    return applyPlanChange(() => result, "shared");
   });
+
+  server.registerTool("get_private_notes", {
+    title: "Read private notes",
+    description: "List notes belonging only to the current demo user. These are excluded from shared-plan tools and household update previews.",
+    inputSchema: {},
+  }, async () => createToolResult(
+    { notes: structuredClone(currentPlan.privateNotes) },
+    `There are ${currentPlan.privateNotes.length} private notes. They are excluded from shared updates.`,
+  ));
+
+  server.registerTool("add_private_note", {
+    title: "Add a private note",
+    description: "Save a short note for the current demo user. The note is local in-memory demo data and is never included in a shared plan or update preview.",
+    inputSchema: {
+      note: z.string().trim().min(1).max(240).describe("Private note text, up to 240 characters."),
+    },
+  }, async ({ note }) => applyPlanChange(
+    (plan) => addPrivateNote(plan, note),
+    "private",
+    "Private note added",
+  ));
+
+  server.registerTool("delete_last_private_note", {
+    title: "Delete the most recent private note",
+    description: "Delete only the current demo user's most recently added private note.",
+    inputSchema: {},
+  }, async () => applyPlanChange(
+    deleteLastPrivateNote,
+    "private",
+    "Private note removed",
+  ));
+
+  server.registerTool("add_activity", {
+    title: "Add a demo activity",
+    description: "Add a fictional activity to the shared evening timeline. This does not change a real calendar or notify anyone.",
+    inputSchema: {
+      title: z.string().trim().min(1).max(80).describe("Short activity title."),
+      time: z.string().regex(/^\d{2}:\d{2}$/).describe("12-hour clock time, formatted HH:MM."),
+      period: z.enum(["AM", "PM"]).describe("Time of day."),
+    },
+  }, async ({ title, time, period }) => applyPlanChange(
+    (plan) => addActivity(plan, { title, time, period }),
+    "shared",
+  ));
+
+  server.registerTool("remove_activity", {
+    title: "Remove a demo activity",
+    description: "Remove an activity previously added to the fictional evening plan. Original household events cannot be removed by this tool.",
+    inputSchema: {
+      title: z.string().trim().min(1).max(80).describe("Exact title of an activity previously added to the demo plan."),
+    },
+  }, async ({ title }) => applyPlanChange(
+    (plan) => removeActivity(plan, title),
+    "shared",
+  ));
 
   server.registerTool("undo_last_change", {
     title: "Undo the last plan change",

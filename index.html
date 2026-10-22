@@ -1,128 +1,214 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f5f0">
-  <meta name="description" content="Hearth is a simulated Alexa+ experience that helps caregiving households adapt their evening plans together.">
-  <title>Hearth — A calmer kind of together</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css">
-  <script type="module" src="./src/main.js"></script>
-</head>
-<body>
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="#" aria-label="Hearth home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 32 32" fill="none"><path d="M5 15.2 16 6l11 9.2v11H5v-11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 26v-7.5a4 4 0 0 1 8 0V26M16 9v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        </span>
-        <span>hearth<span class="brand-period">.</span></span>
-      </a>
-      <nav class="topbar-nav" aria-label="Main navigation">
-        <a class="nav-link nav-link--active" href="#plan">Evening plan</a>
-        <a class="nav-link" href="#how-it-works">How it works</a>
-      </nav>
-      <div class="topbar-meta">
-        <span class="demo-pill"><span class="demo-dot"></span> Local MCP demo</span>
-        <button class="avatar-button" type="button" aria-label="Demo household: Maya">M</button>
-      </div>
-    </header>
-
-    <main id="plan">
-      <section class="welcome-row">
-        <div>
-          <p class="eyebrow"><span class="eyebrow-line"></span> WEDNESDAY, OCTOBER 21 <span class="eyebrow-divider">/</span> HOME, IN SYNC</p>
-          <h1>A little more room<br>in the <span>evening.</span></h1>
-          <p class="welcome-copy">Plans change. Hearth helps everyone find the next right thing.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="NorthStar Logistics delivers freight, shipping, and logistics solutions across Europe and the United States." />
+    <title>NorthStar Logistics | Freight & Shipping Across Europe & the US</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand-wrap">
+          <div class="brand-mark">N</div>
+          <div>
+            <div class="brand-name">NorthStar</div>
+            <div class="brand-subtitle">Logistics</div>
+          </div>
         </div>
-        <div class="welcome-note">
-          <span class="sunset-icon" aria-hidden="true">
-            <svg viewBox="0 0 48 48" fill="none"><path d="M8 31h32M13 31a11 11 0 0 1 22 0M24 8v5M10 15l4 4m20-4-4 4M5 25h5m28 0h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 39h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          </span>
-          <div><strong>Your Wednesday, together</strong><span>3 people · 4 moments · one shared plan</span></div>
-        </div>
-      </section>
 
-      <section class="workspace-grid" aria-label="Evening household assistant">
-        <section class="assistant-card" aria-labelledby="assistant-title">
-          <header class="assistant-header">
-            <div class="assistant-identity">
-              <span class="assistant-orb" aria-hidden="true"><span></span></span>
-              <div>
-                <p class="eyebrow">YOUR HOME ASSISTANT</p>
-                <h2 id="assistant-title">Here with you, Maya.</h2>
-              </div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="#services">Services</a>
+          <a href="#network">Network</a>
+          <a href="#operations">Operations</a>
+          <a href="#contact">Contact</a>
+        </nav>
+
+        <div class="nav-actions">
+          <button class="outline-button" type="button">Track shipment</button>
+          <button class="primary-button" type="button">Request quote</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">European & U.S. supply chain support</p>
+            <h1>Precision freight solutions that keep commerce moving.</h1>
+            <p class="lead">
+              From warehouse transfers to express road freight and cross-border shipments, NorthStar orchestrates faster, smarter delivery across Europe and the United States.
+            </p>
+
+            <div class="hero-actions">
+              <button class="primary-button" type="button">Book a shipment</button>
+              <button class="secondary-button" type="button">See network coverage</button>
             </div>
-            <span class="availability"><span></span> Connecting to local tools</span>
-          </header>
 
-          <div class="conversation" id="conversation" aria-live="polite" aria-label="Conversation">
-            <div class="time-marker"><span></span> 5:06 PM <span></span></div>
-            <article class="assistant-message">
-              <span class="message-avatar" aria-hidden="true">h</span>
-              <div class="message-body">
-                <p>Good evening. Pickup, dinner, and Nana's visit are on your plan. Want me to help make a little breathing room?</p>
-                <div class="message-context"><span class="context-spark">✳</span> I’m looking at your demo calendar and home routine.</div>
-              </div>
-            </article>
+            <ul class="trust-list">
+              <li>99.94% on-time delivery</li>
+              <li>18 strategic hubs</li>
+              <li>24/7 control tower</li>
+            </ul>
           </div>
 
-          <div class="scenario-prompt">
-            <div class="prompt-heading"><span>TRY A REAL-LIFE MOMENT</span><span class="prompt-rule"></span></div>
-            <div class="scenario-chips">
-              <button class="scenario-chip" type="button" data-scenario="late-pickup"><span class="chip-icon">↗</span> The bus is running late</button>
-              <button class="scenario-chip" type="button" data-scenario="nana-arrival"><span class="chip-icon">⌂</span> Nana is coming at six</button>
-              <button class="scenario-chip" type="button" data-scenario="quiet-minute"><span class="chip-icon">◷</span> I need ten quiet minutes</button>
+          <div class="hero-panel">
+            <div class="panel-card panel-chart">
+              <div class="panel-head">
+                <div>
+                  <span class="panel-label">Live operations</span>
+                  <h2>Network pulse</h2>
+                </div>
+                <span class="status-badge online">Live</span>
+              </div>
+
+              <div class="metric-grid">
+                <div>
+                  <span class="metric-label">Active shipments</span>
+                  <strong id="active-shipments">12,480</strong>
+                </div>
+                <div>
+                  <span class="metric-label">Drivers online</span>
+                  <strong id="drivers-online">4,860</strong>
+                </div>
+              </div>
+
+              <div class="bars" aria-label="Shipment activity chart">
+                <span style="height: 26%"></span>
+                <span style="height: 40%"></span>
+                <span style="height: 30%"></span>
+                <span style="height: 62%"></span>
+                <span style="height: 78%"></span>
+                <span style="height: 64%"></span>
+                <span style="height: 88%"></span>
+                <span style="height: 72%"></span>
+              </div>
+            </div>
+
+            <div class="mini-grid">
+              <div class="panel-card mini-card">
+                <span class="panel-label">This hour</span>
+                <strong>328</strong>
+                <small>dispatches cleared</small>
+              </div>
+              <div class="panel-card mini-card highlight">
+                <span class="panel-label">Control room</span>
+                <strong>Athens</strong>
+                <small>Greece hub active</small>
+              </div>
             </div>
           </div>
-
-          <form class="composer" id="request-form">
-            <label class="sr-only" for="request-input">Tell Hearth what changed</label>
-            <span class="composer-spark" aria-hidden="true">✳</span>
-            <input id="request-input" name="request" type="text" maxlength="240" placeholder="Tell Hearth what changed…" autocomplete="off">
-            <button class="voice-button" id="voice-button" type="button" aria-label="Start voice input" title="Start voice input. Your microphone is used only after you press this button.">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            </button>
-            <button class="send-button" type="submit" aria-label="Send request">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 12 16-7-5.5 15-3-6-7.5-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m11.5 14 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            </button>
-          </form>
-          <p class="voice-status" id="voice-status" role="status" aria-live="polite">Tap the microphone to speak, then review your words and press Send.</p>
-          <p class="prompt-examples">Try: “The bus is late,” “show tonight’s plan,” “prepare a family update,” “undo last change,” or “reset demo.”</p>
-          <p class="privacy-note"><span aria-hidden="true">◈</span> Mic starts only when tapped. Browser speech services may process audio; only the transcript you send reaches Hearth's local MCP tool.</p>
         </section>
 
-        <aside class="plan-card" aria-labelledby="plan-title">
-          <div class="plan-card-top">
+        <section class="stats-bar" aria-label="Operational metrics">
+          <article>
+            <span>On-time delivery</span>
+            <strong>99.94%</strong>
+          </article>
+          <article>
+            <span>Regional coverage</span>
+            <strong>8 regions</strong>
+          </article>
+          <article>
+            <span>Response SLA</span>
+            <strong>&lt; 15 min</strong>
+          </article>
+          <article>
+            <span>Fleet ready</span>
+            <strong>1,240 units</strong>
+          </article>
+        </section>
+
+        <section class="section-block" id="services">
+          <div class="section-header">
+            <p class="eyebrow">What we move</p>
+            <h2>Built for every leg of the journey.</h2>
+          </div>
+
+          <div class="service-grid">
+            <article class="service-card">
+              <div class="service-icon">↗</div>
+              <h3>Freight forwarding</h3>
+              <p>Cross-border freight coordination for pallet, less-than-truckload, and full-truckload shipments.</p>
+            </article>
+            <article class="service-card">
+              <div class="service-icon">▣</div>
+              <h3>Warehousing</h3>
+              <p>Inventory visibility, transfer staging, and strategic hub operations across European and U.S. markets.</p>
+            </article>
+            <article class="service-card">
+              <div class="service-icon">◉</div>
+              <h3>Last-mile delivery</h3>
+              <p>Adaptive routing and real-time dispatch keeps city and regional delivery lanes on schedule.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section-block operations" id="operations">
+          <div class="section-header split-header">
             <div>
-              <p class="eyebrow">THE WHOLE PICTURE</p>
-              <h2 id="plan-title">Tonight, at a glance</h2>
+              <p class="eyebrow">Live control</p>
+              <h2>Operations across Europe and the United States.</h2>
             </div>
-            <div class="plan-actions">
-              <button class="reset-button" id="reset-demo" type="button" aria-label="Reset the simulated evening plan">↺ Reset demo</button>
-              <span class="sync-indicator" aria-label="Demo plan is in sync"><span></span> IN SYNC</span>
-            </div>
+            <button class="secondary-button" type="button">View control tower</button>
           </div>
 
-          <div class="household-strip">
-            <div class="household-avatars" aria-label="Maya, Nora, and Nana">
-              <span class="person-avatar person-avatar--maya">M</span><span class="person-avatar person-avatar--nora">N</span><span class="person-avatar person-avatar--nana">N</span>
+          <div class="data-grid">
+            <div class="panel-card wide-panel">
+              <div class="panel-head simple-head">
+                <h3>Shipment watchlist</h3>
+                <span class="panel-label" id="generated-at">Live feed</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Shipment</th>
+                      <th>Route</th>
+                      <th>Mode</th>
+                      <th>Status</th>
+                      <th>ETA</th>
+                    </tr>
+                  </thead>
+                  <tbody id="shipment-table-body"></tbody>
+                </table>
+              </div>
             </div>
-            <p><strong>Your people</strong><span>Maya, Nora &amp; Nana</span></p>
-            <button class="text-button" id="share-button" type="button">Review update <span aria-hidden="true">↗</span></button>
+
+            <div class="panel-card side-panel">
+              <div class="panel-head simple-head">
+                <h3>Regional allocation</h3>
+              </div>
+              <div id="allocation-list" class="allocation-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-block drivers" id="network">
+          <div class="section-header split-header">
+            <div>
+              <p class="eyebrow">Driver network</p>
+              <h2>People powering every lane.</h2>
+            </div>
+            <button class="secondary-button" type="button">Meet the team</button>
           </div>
 
-          <div class="timeline-heading"><span>THE EVENING FLOW</span><span id="plan-status">3 moments</span></div>
-          <ol class="timeline" id="timeline" aria-label="Tonight's timeline" aria-live="polite"></ol>
+          <div class="driver-grid" id="driver-grid"></div>
+        </section>
 
-          <section class="change-log" aria-labelledby="change-title" aria-live="polite">
-            <div class="change-log-heading">
-              <div><p class="eyebrow">A CLEAR TRAIL</p><h3 id="change-title">What changed</h3></div>
-              <span class="change-log-status" id="change-status">Nothing to undo</span>
-            </div>
-            <p class="change-log-reply" id="change-reply">As Hearth adapts the demo, you'll see exactly what changed here.</p>
-            <ul class="change-log-list" id="change-list"></ul>
+        <section class="cta-panel" id="contact">
+          <div>
+            <p class="eyebrow">Need a partner with control?</p>
+            <h2>Let’s move your next shipment with confidence.</h2>
+          </div>
+          <button class="primary-button" type="button">Talk to logistics team</button>
+        </section>
+      </main>
+    </div>
+
+    <script src="./src/main.js" type="module"></script>
+  </body>
+</html>"change-reply">As Hearth adapts the demo, you'll see exactly what changed here.</p>            <ul class="change-log-list" id="change-list"></ul>
             <div class="change-log-footer">
               <span>Local demo only · last five changes are reversible</span>
               <button class="undo-button" id="undo-change" type="button" disabled>Undo last change</button>
@@ -138,6 +224,15 @@
             <div class="private-lock" aria-hidden="true">⌑</div>
             <div><span class="eyebrow">JUST FOR YOU <span class="private-tag">PRIVATE</span></span><p>Take a quiet moment before dinner.</p></div>
             <span class="private-time">5:20</span>
+          </section>
+
+          <section class="private-notes" aria-labelledby="notes-title">
+            <div class="private-notes-heading">
+              <div><p class="eyebrow">ONLY VISIBLE HERE</p><h3 id="notes-title">Private notes</h3></div>
+              <span class="private-tag">NOT SHARED</span>
+            </div>
+            <ul id="private-note-list" aria-live="polite"></ul>
+            <p class="private-notes-empty" id="private-notes-empty">Say “add a note that…” to jot something down.</p>
           </section>
         </aside>
       </section>

@@ -24,6 +24,11 @@ export class HearthMcpClient {
     const requiredTools = [
       "get_evening_plan",
       "adjust_evening_plan",
+      "get_private_notes",
+      "add_private_note",
+      "delete_last_private_note",
+      "add_activity",
+      "remove_activity",
       "undo_last_change",
       "preview_household_update",
       "reset_demo_plan",

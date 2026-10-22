@@ -40,6 +40,102 @@ export function createInitialPlan() {
     entryLight: "Standby · not yet needed",
     messages: [],
     privateReminder: "Take a quiet moment before dinner.",
+    privateNotes: [],
+  };
+}
+
+function eventMinutes(event) {
+  const [hour, minute] = event.time.split(":").map(Number);
+  const hour24 = event.period === "PM" && hour !== 12
+    ? hour + 12
+    : event.period === "AM" && hour === 12 ? 0 : hour;
+  return hour24 * 60 + minute;
+}
+
+function nextActivityId(events) {
+  let id = 1;
+  while (events.some((event) => event.id === `activity-${id}`)) id += 1;
+  return `activity-${id}`;
+}
+
+export function addPrivateNote(currentPlan, note) {
+  const text = String(note ?? "").trim();
+  if (!text) return { plan: currentPlan, updated: false, reply: "Tell me what you want the private note to say." };
+  if (text.length > 240) {
+    return { plan: currentPlan, updated: false, reply: "Keep the private note under 240 characters, please." };
+  }
+
+  const plan = structuredClone(currentPlan);
+  plan.privateNotes.push({ id: `note-${Date.now()}-${plan.privateNotes.length}`, text });
+  return {
+    plan,
+    updated: true,
+    reply: "I saved that as a private note. It won't appear in the shared plan or family update.",
+  };
+}
+
+export function deleteLastPrivateNote(currentPlan) {
+  if (!currentPlan.privateNotes.length) {
+    return { plan: currentPlan, updated: false, reply: "There are no private notes to delete." };
+  }
+  const plan = structuredClone(currentPlan);
+  plan.privateNotes.pop();
+  return {
+    plan,
+    updated: true,
+    reply: "I deleted your most recent private note. It wasn't part of the shared plan.",
+  };
+}
+
+export function addActivity(currentPlan, { title, time, period }) {
+  const safeTitle = String(title ?? "").trim();
+  if (!safeTitle || safeTitle.length > 80) {
+    return { plan: currentPlan, updated: false, reply: "Give the activity a short title, up to 80 characters." };
+  }
+  if (!time || !period) {
+    return { plan: currentPlan, updated: false, needsTime: true, title: safeTitle };
+  }
+
+  const plan = structuredClone(currentPlan);
+  plan.events.push({
+    id: nextActivityId(plan.events),
+    time,
+    period,
+    title: safeTitle,
+    detail: "Added to the demo plan",
+    tone: "lavender",
+    icon: "•",
+    state: "Planned",
+  });
+  plan.events.sort((left, right) => eventMinutes(left) - eventMinutes(right));
+  plan.intent = "activity-added";
+  return {
+    plan,
+    updated: true,
+    reply: `I added ${safeTitle} at ${time} ${period} to tonight's demo plan.`,
+  };
+}
+
+export function removeActivity(currentPlan, title) {
+  const normalizedTitle = String(title ?? "").trim().toLowerCase();
+  const activityIndex = currentPlan.events.findIndex((event) =>
+    event.id.startsWith("activity-")
+    && event.title.toLowerCase() === normalizedTitle);
+  if (activityIndex === -1) {
+    return {
+      plan: currentPlan,
+      updated: false,
+      reply: "I couldn't find that added activity. Ask me to show tonight's plan to check its name.",
+    };
+  }
+
+  const plan = structuredClone(currentPlan);
+  const [removed] = plan.events.splice(activityIndex, 1);
+  plan.intent = "activity-removed";
+  return {
+    plan,
+    updated: true,
+    reply: `I removed ${removed.title} from tonight's demo plan.`,
   };
 }
 
@@ -138,6 +234,21 @@ export function describePlanChanges(previousPlan, nextPlan) {
         : `${previousEvent.title} → ${nextEvent.title}`;
       changes.push(`${title}: ${details.join(" · ")}`);
     }
+  }
+
+  for (const nextEvent of nextPlan.events) {
+    if (!previousPlan.events.some((event) => event.id === nextEvent.id)) {
+      changes.push(`Activity added: ${nextEvent.title} at ${nextEvent.time} ${nextEvent.period}`);
+    }
+  }
+  for (const previousEvent of previousPlan.events) {
+    if (!nextPlan.events.some((event) => event.id === previousEvent.id)) {
+      changes.push(`Activity removed: ${previousEvent.title}`);
+    }
+  }
+  if (previousPlan.privateNotes.length !== nextPlan.privateNotes.length) {
+    const difference = nextPlan.privateNotes.length - previousPlan.privateNotes.length;
+    changes.push(difference > 0 ? "Private note added" : "Private note removed");
   }
 
   if (previousPlan.timer !== nextPlan.timer) {
