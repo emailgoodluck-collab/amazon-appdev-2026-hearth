@@ -1,4 +1,5 @@
 import { HearthMcpClient } from "./mcp-client.js";
+import { createSpeechRecognition, isUndoRequest } from "./voice-input.js";
 
 const planElement = document.querySelector("#timeline");
 const conversation = document.querySelector("#conversation");
@@ -21,13 +22,58 @@ const undoButton = document.querySelector("#undo-change");
 const changeStatus = document.querySelector("#change-status");
 const changeReply = document.querySelector("#change-reply");
 const changeList = document.querySelector("#change-list");
+const voiceStatus = document.querySelector("#voice-status");
 const scenarioButtons = [...document.querySelectorAll("[data-scenario]")];
 
 const mcp = new HearthMcpClient();
 let plan = null;
 let busy = false;
 let canUndo = false;
+let isListening = false;
 let toastTimer;
+const recognition = createSpeechRecognition({
+  onStart() {
+    isListening = true;
+    voiceButton.classList.add("voice-button--active");
+    voiceButton.setAttribute("aria-label", "Stop listening");
+    voiceButton.title = "Stop listening";
+    voiceStatus.textContent = "Listening… say a short request.";
+  },
+  onTranscript({ transcript, isFinal }) {
+    if (busy) return;
+    if (isFinal) {
+      input.value = transcript;
+      voiceStatus.textContent = transcript
+        ? "Transcript ready. Review it, then press Send to apply."
+        : "No speech was recognized. Try again or type below.";
+    } else {
+      voiceStatus.textContent = `Hearing: ${transcript}`;
+    }
+  },
+  onError(error) {
+    const messages = {
+      "not-allowed": "Microphone permission was blocked. Allow it in your browser settings, then try again.",
+      "service-not-allowed": "Browser speech recognition is unavailable. You can type a request instead.",
+      "audio-capture": "No microphone is available. You can type a request instead.",
+      "no-speech": "I didn't hear anything. Tap the microphone and try again.",
+      network: "The browser speech service had a network error. You can type a request instead.",
+      "language-not-supported": "English speech recognition isn't available in this browser.",
+    };
+    voiceStatus.textContent = messages[error]
+      ?? `Speech recognition failed (${error}). You can type a request instead.`;
+  },
+  onEnd() {
+    isListening = false;
+    voiceButton.classList.remove("voice-button--active");
+    voiceButton.setAttribute("aria-label", "Start voice input");
+    voiceButton.title = recognition
+      ? "Start voice input. Your microphone is used only after you press this button."
+      : "Voice input is unavailable in this browser.";
+    if (voiceStatus.textContent === "Listening… say a short request.") {
+      voiceStatus.textContent = "No speech was recognized. Try again or type below.";
+    }
+  },
+});
 
 function renderChangeLog(lastUpdate) {
   canUndo = Boolean(lastUpdate?.canUndo);
@@ -88,9 +134,10 @@ function addConversationMessage(role, text, contextText = "") {
 
 function setBusy(value) {
   busy = value;
+  if (value && isListening && recognition) recognition.stop();
   input.disabled = value;
   form.querySelector('[type="submit"]').disabled = value;
-  voiceButton.disabled = value;
+  voiceButton.disabled = value || !recognition;
   shareButton.disabled = value;
   resetButton.disabled = value;
   undoButton.disabled = value || !canUndo;
@@ -109,6 +156,24 @@ async function submitRequest(request) {
   setBusy(true);
   addConversationMessage("user", normalized);
   try {
+    if (isUndoRequest(normalized)) {
+      const result = await mcp.callTool("undo_last_change");
+      plan = result.plan;
+      renderChangeLog({
+        canUndo: result.canUndo,
+        reply: result.reply,
+        changes: result.changes,
+      });
+      if (result.changes.length) renderTimeline();
+      addConversationMessage(
+        "assistant",
+        result.reply,
+        result.changes.length ? "Change reversed · Local demo only" : "No changes made",
+      );
+      setConnectionStatus(true);
+      return;
+    }
+
     const result = await mcp.callTool("adjust_evening_plan", { request: normalized });
     plan = result.plan;
     if (result.updated) {
@@ -133,9 +198,9 @@ async function submitRequest(request) {
     );
     setConnectionStatus(false);
   } finally {
-    input.value = "";
+    if (input.value === normalized) input.value = "";
     setBusy(false);
-    input.focus();
+    if (!isListening) input.focus();
   }
 }
 
@@ -172,18 +237,28 @@ document.querySelectorAll("[data-scenario]").forEach((button) => {
   });
 });
 
+voiceButton.disabled = !recognition;
+voiceButton.title = recognition
+  ? "Start voice input. Your microphone is used only after you press this button."
+  : "Voice input is unavailable in this browser.";
+if (!recognition) {
+  voiceStatus.textContent = "Voice input isn't supported here. Type a request or choose a prompt.";
+}
 voiceButton.addEventListener("click", () => {
-  const sample = "The bus is running 12 minutes late. Can you make room?";
-  voiceButton.classList.add("voice-button--active");
-  voiceButton.setAttribute("aria-label", "Simulating voice request");
-  voiceButton.title = "Simulating a voice request — no microphone is used";
-  input.value = sample;
-  setTimeout(() => {
-    voiceButton.classList.remove("voice-button--active");
-    voiceButton.setAttribute("aria-label", "Simulate a voice request");
-    voiceButton.title = "Simulate a voice request";
-    void submitRequest(sample);
-  }, 650);
+  if (!recognition || busy) return;
+  if (isListening) {
+    recognition.stop();
+    return;
+  }
+
+  voiceStatus.textContent = "Requesting microphone access…";
+  isListening = true;
+  try {
+    recognition.start();
+  } catch (error) {
+    isListening = false;
+    voiceStatus.textContent = `Couldn't start voice input: ${error instanceof Error ? error.message : String(error)}. You can type a request instead.`;
+  }
 });
 
 shareButton.addEventListener("click", async () => {

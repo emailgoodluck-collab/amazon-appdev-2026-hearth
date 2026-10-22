@@ -81,14 +81,16 @@
             <label class="sr-only" for="request-input">Tell Hearth what changed</label>
             <span class="composer-spark" aria-hidden="true">✳</span>
             <input id="request-input" name="request" type="text" maxlength="240" placeholder="Tell Hearth what changed…" autocomplete="off">
-            <button class="voice-button" id="voice-button" type="button" aria-label="Simulate a voice request" title="Simulate a voice request">
+            <button class="voice-button" id="voice-button" type="button" aria-label="Start voice input" title="Start voice input. Your microphone is used only after you press this button.">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
             </button>
             <button class="send-button" type="submit" aria-label="Send request">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4 12 16-7-5.5 15-3-6-7.5-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m11.5 14 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
             </button>
           </form>
-          <p class="privacy-note"><span aria-hidden="true">◈</span> Demo requests go to your local MCP server. Nothing is sent to a family member or external service.</p>
+          <p class="voice-status" id="voice-status" role="status" aria-live="polite">Tap the microphone to speak, then review your words and press Send.</p>
+          <p class="prompt-examples">Try: “The bus is late,” “Nana is coming at six,” “I need ten quiet minutes,” or “Undo last change.”</p>
+          <p class="privacy-note"><span aria-hidden="true">◈</span> Mic starts only when tapped. Browser speech services may process audio; only the transcript you send reaches Hearth's local MCP tool.</p>
         </section>
 
         <aside class="plan-card" aria-labelledby="plan-title">

@@ -35,13 +35,13 @@ The server validates each MCP `Origin` and `Host` to reduce DNS-rebinding risk.
 1. Choose **The bus is running late** to call the MCP tool and shift pickup and
    dinner together.
 2. Choose **Nana is coming at six** to ready the entry plan.
-3. Choose **I need ten quiet minutes** to see how a personal need changes the
-   order without being included in the shared update.
+3. Tap the microphone, say **I need ten quiet minutes**, review the transcript,
+   and press Send to see how a personal need changes the order.
 4. Open **Review update** to call the share-preview MCP tool and confirm
    personal details are excluded before copying. Copying is local only; the
    prototype does not send messages.
-5. Use **Undo last change** to see the previous plan restored, then choose
-   **Reset demo** to return to the initial state.
+5. Say **Undo last change**, review the transcript, and press Send to restore
+   the previous plan; choose **Reset demo** to return to the initial state.
 
 Every adjustment is shown in **What changed**, including timeline and simulated
 device-state changes. Undo can be used repeatedly for up to five recent
@@ -54,7 +54,7 @@ adjustments; it never controls a real device or calendar.
 - `adjust_evening_plan` — interprets the demo's bounded pickup, arrival, and
   quiet-time scenarios and changes only local in-memory demo state.
 - `undo_last_change` — reverses one of the five most recent plan adjustments;
-  the UI shows a readable change trail without exposing the private reminder.
+  the UI also routes the explicit "undo last change" prompt to this tool.
 - `preview_household_update` — prepares a reviewable text preview without
   sending it.
 - `reset_demo_plan` — resets fictional in-memory demo state for repeatable
@@ -69,12 +69,22 @@ restarts.
 
 - This is a simulated Alexa+ web experience and a self-hosted MCP server; it is
   not connected to Alexa+ or Amazon devices.
-- No microphone is accessed; the voice control replays a sample request.
+- Voice input is push-to-talk: the microphone is requested only after the user
+  presses the button, recognition stops after one utterance, and no wake word
+  or background listening is used. The transcript is placed in the composer and
+  is not sent to Hearth until the user reviews and presses Send.
+- Example prompts: "The bus is running late", "Nana is coming at six", "I need
+  ten quiet minutes", and "Hey Hearth, can you undo the last change?".
+- Speech recognition depends on browser support and microphone permission. If
+  unavailable or blocked, the typed request and scenario buttons still work.
+- Browser speech-recognition services may process microphone audio according
+  to the browser vendor's policies. Hearth does not store audio; only a
+  user-submitted transcript reaches the local MCP server.
 - Calendar entries, household members, timers, and smart-home states are
   fictional demo data. No real devices, calendars, or accounts are connected.
-- The browser sends requests only to the loopback MCP server. The server does
-  not call external APIs, log request contents, persist user data, or send
-  household messages.
+- Hearth's browser client sends MCP requests only to the loopback server. The
+  server does not call external APIs, log request contents, persist user data,
+  or send household messages.
 - The share flow creates a local text preview and offers an explicit copy
   action. Private reminder data is excluded server-side.
 - The scenario engine is deterministic and local, with no generative AI or AWS
@@ -91,7 +101,8 @@ Suggested video outline (about 2 minutes):
 - 0:00–0:20 — State the caregiving coordination problem and show the evening
   plan.
 - 0:20–1:10 — Trigger the late-pickup and quiet-time scenarios; show the plan
-  update and private reminder.
+  update and private reminder. Demonstrate push-to-talk, transcript review,
+  and the explicit Send step.
 - 1:10–1:40 — Open the household share preview and show that the private
   reminder is excluded.
 - 1:40–2:00 — Show the local MCP connection and clarify that household devices
