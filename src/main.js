@@ -1,5 +1,6 @@
 import { HearthMcpClient } from "./mcp-client.js";
-import { createSpeechRecognition, isUndoRequest } from "./voice-input.js";
+import { classifyPrompt, summarizeEveningPlan } from "./prompt-commands.js";
+import { createSpeechRecognition } from "./voice-input.js";
 
 const planElement = document.querySelector("#timeline");
 const conversation = document.querySelector("#conversation");
@@ -153,10 +154,49 @@ function setConnectionStatus(connected) {
 async function submitRequest(request) {
   const normalized = String(request ?? "").trim();
   if (!normalized || busy) return;
+  const command = classifyPrompt(normalized);
   setBusy(true);
   addConversationMessage("user", normalized);
   try {
-    if (isUndoRequest(normalized)) {
+    if (command === "help") {
+      addConversationMessage(
+        "assistant",
+        "I can adjust a late pickup, get ready for Nana, make a quiet moment, read the plan, prepare a household update, undo a change, or reset this demo. Try one short request.",
+        "Prompt guide · No changes made",
+      );
+      return;
+    }
+
+    if (command === "show-plan") {
+      const result = await mcp.callTool("get_evening_plan");
+      plan = result.plan;
+      const summary = summarizeEveningPlan(plan);
+      addConversationMessage("assistant", summary, "Shared plan · Personal reminders excluded");
+      setConnectionStatus(true);
+      return;
+    }
+
+    if (command === "preview-update") {
+      await prepareSharePreview();
+      addConversationMessage(
+        "assistant",
+        "The update is ready for you to review. Nothing has been sent.",
+        "Preview prepared · Nothing sent",
+      );
+      return;
+    }
+
+    if (command === "reset-demo") {
+      const result = await mcp.callTool("reset_demo_plan");
+      plan = result.plan;
+      renderChangeLog({ canUndo: false });
+      renderTimeline();
+      addConversationMessage("assistant", result.reply, "Demo reset · No real data changed");
+      setConnectionStatus(true);
+      return;
+    }
+
+    if (command === "undo") {
       const result = await mcp.callTool("undo_last_change");
       plan = result.plan;
       renderChangeLog({
@@ -200,7 +240,26 @@ async function submitRequest(request) {
   } finally {
     if (input.value === normalized) input.value = "";
     setBusy(false);
-    if (!isListening) input.focus();
+    if (!isListening && !dialog.open) input.focus();
+  }
+}
+
+async function prepareSharePreview() {
+  feedback.textContent = "";
+  sharePreview.textContent = "";
+  copyButton.disabled = true;
+  dialog.showModal();
+  feedback.textContent = "Preparing preview with the local MCP tool…";
+  try {
+    const result = await mcp.callTool("preview_household_update");
+    sharePreview.textContent = result.preview;
+    copyButton.disabled = false;
+    feedback.textContent = "Review this update. It has not been sent.";
+    setConnectionStatus(true);
+  } catch (error) {
+    feedback.textContent = `Could not prepare a share preview: ${error instanceof Error ? error.message : String(error)}`;
+    setConnectionStatus(false);
+    throw error;
   }
 }
 
@@ -264,18 +323,14 @@ voiceButton.addEventListener("click", () => {
 shareButton.addEventListener("click", async () => {
   if (busy) return;
   setBusy(true);
-  feedback.textContent = "";
-  copyButton.disabled = false;
-  dialog.showModal();
-  feedback.textContent = "Preparing preview with the local MCP tool…";
   try {
-    const result = await mcp.callTool("preview_household_update");
-    sharePreview.textContent = result.preview;
-    feedback.textContent = "Review this update. It has not been sent.";
+    await prepareSharePreview();
   } catch (error) {
-    sharePreview.textContent = "";
-    feedback.textContent = `Could not prepare a share preview: ${error instanceof Error ? error.message : String(error)}`;
-    copyButton.disabled = true;
+    addConversationMessage(
+      "assistant",
+      `I couldn't prepare the update. ${error instanceof Error ? error.message : String(error)}`,
+      "MCP offline · Nothing sent",
+    );
   } finally {
     setBusy(false);
   }

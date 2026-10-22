@@ -6,7 +6,8 @@ import {
   describePlanChanges,
   planFromRequest,
 } from "../src/home-orchestrator.js";
-import { createSpeechRecognition, getRecognitionConstructor, isUndoRequest } from "../src/voice-input.js";
+import { classifyPrompt, summarizeEveningPlan } from "../src/prompt-commands.js";
+import { createSpeechRecognition, getRecognitionConstructor } from "../src/voice-input.js";
 
 test("late pickup shifts dinner and updates the timer without mutating the original plan", () => {
   const original = createInitialPlan();
@@ -67,13 +68,24 @@ test("change summaries show shared timeline and device changes without private r
   assert.doesNotMatch(changes.join(" "), /quiet moment|private reminder/i);
 });
 
-test("undo voice and text prompts are recognized without matching unrelated requests", () => {
-  assert.equal(isUndoRequest("Undo last change"), true);
-  assert.equal(isUndoRequest("Please reverse the most recent plan update."), true);
-  assert.equal(isUndoRequest("roll back"), true);
-  assert.equal(isUndoRequest("Hey Hearth, can you undo the last change?"), true);
-  assert.equal(isUndoRequest("undo the last change and tell me the weather"), false);
-  assert.equal(isUndoRequest("the bus is late"), false);
+test("spoken and typed prompts route to explicit plan, preview, undo, reset, and help actions", () => {
+  assert.equal(classifyPrompt("Hey Hearth, what’s on tonight?"), "show-plan");
+  assert.equal(classifyPrompt("Read me the plan"), "show-plan");
+  assert.equal(classifyPrompt("Could you prepare a family update?"), "preview-update");
+  assert.equal(classifyPrompt("Hey Hearth, can you undo the last change?"), "undo");
+  assert.equal(classifyPrompt("Please start over"), "reset-demo");
+  assert.equal(classifyPrompt("What can you do?"), "help");
+  assert.equal(classifyPrompt("undo the last change and tell me the weather"), "adjust-plan");
+  assert.equal(classifyPrompt("the bus is late"), "adjust-plan");
+});
+
+test("spoken plan summary contains shared events and excludes personal reminder", () => {
+  const { plan } = planFromRequest(createInitialPlan(), "The bus is running late.");
+  const summary = summarizeEveningPlan(plan);
+
+  assert.match(summary, /Pickup is running late/);
+  assert.match(summary, /Dinner, when you’re ready/);
+  assert.doesNotMatch(summary, /quiet moment|private reminder/i);
 });
 
 test("speech recognition is opt-in, single-utterance, and exposes interim and final text", () => {

@@ -37,11 +37,13 @@ The server validates each MCP `Origin` and `Host` to reduce DNS-rebinding risk.
 2. Choose **Nana is coming at six** to ready the entry plan.
 3. Tap the microphone, say **I need ten quiet minutes**, review the transcript,
    and press Send to see how a personal need changes the order.
-4. Open **Review update** to call the share-preview MCP tool and confirm
+4. Ask **show tonight's plan** to hear a private-safe timeline summary, then say
+   **prepare a family update** to open the review-only share preview.
+5. Open **Review update** to call the share-preview MCP tool and confirm
    personal details are excluded before copying. Copying is local only; the
    prototype does not send messages.
-5. Say **Undo last change**, review the transcript, and press Send to restore
-   the previous plan; choose **Reset demo** to return to the initial state.
+6. Say **Undo last change** or **reset demo**, review the transcript, and press
+   Send to perform that explicit action.
 
 Every adjustment is shown in **What changed**, including timeline and simulated
 device-state changes. Undo can be used repeatedly for up to five recent
@@ -74,7 +76,8 @@ restarts.
   or background listening is used. The transcript is placed in the composer and
   is not sent to Hearth until the user reviews and presses Send.
 - Example prompts: "The bus is running late", "Nana is coming at six", "I need
-  ten quiet minutes", and "Hey Hearth, can you undo the last change?".
+  ten quiet minutes", "show tonight's plan", "prepare a family update", "Hey
+  Hearth, can you undo the last change?", "reset demo", and "what can you do?".
 - Speech recognition depends on browser support and microphone permission. If
   unavailable or blocked, the typed request and scenario buttons still work.
 - Browser speech-recognition services may process microphone audio according

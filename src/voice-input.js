@@ -32,8 +32,3 @@ export function createSpeechRecognition(callbacks, Recognition = getRecognitionC
 export function getRecognitionConstructor(scope = globalThis) {
   return scope.SpeechRecognition ?? scope.webkitSpeechRecognition ?? null;
 }
-
-export function isUndoRequest(request) {
-  return /^(?:(?:hey\s+)?hearth[,:]?\s*)?(?:(?:please|can you|could you)\s+)?(?:undo|reverse|roll back)(?:\s+(?:the\s+)?(?:last|most recent)\s+(?:plan\s+)?(?:change|update|adjustment))?(?:\s+please)?[.!?]*$/i
-    .test(String(request ?? "").trim());
-}
